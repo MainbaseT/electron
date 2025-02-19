@@ -54,27 +54,18 @@ struct Converter<std::nullptr_t> {
   }
 };
 
+template <size_t N>
+struct Converter<char[N]> {
+  static v8::Local<v8::Value> ToV8(v8::Isolate* isolate, const char (&val)[N]) {
+    return v8::String::NewFromUtf8Literal(isolate, val);
+  }
+};
+
 template <>
 struct Converter<const char*> {
   static v8::Local<v8::Value> ToV8(v8::Isolate* isolate, const char* val) {
-    return v8::String::NewFromUtf8(isolate, val, v8::NewStringType::kNormal)
-        .ToLocalChecked();
-  }
-};
-
-template <>
-struct Converter<char[]> {
-  static v8::Local<v8::Value> ToV8(v8::Isolate* isolate, const char* val) {
-    return v8::String::NewFromUtf8(isolate, val, v8::NewStringType::kNormal)
-        .ToLocalChecked();
-  }
-};
-
-template <size_t n>
-struct Converter<char[n]> {
-  static v8::Local<v8::Value> ToV8(v8::Isolate* isolate, const char* val) {
-    return v8::String::NewFromUtf8(isolate, val, v8::NewStringType::kNormal,
-                                   n - 1)
+    return v8::String::NewFromUtf8(isolate, val ? val : "",
+                                   v8::NewStringType::kNormal)
         .ToLocalChecked();
   }
 };

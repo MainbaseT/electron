@@ -8,6 +8,7 @@
 
 #include "shell/browser/native_window.h"
 #include "shell/browser/ui/views/submenu_button.h"
+#include "ui/base/mojom/menu_source_type.mojom.h"
 #include "ui/color/color_provider.h"
 #include "ui/native_theme/common_theme.h"
 #include "ui/views/background.h"
@@ -42,6 +43,9 @@ MenuBar::MenuBar(NativeWindow* window, RootView* root_view)
   SetLayoutManager(std::make_unique<views::BoxLayout>(
       views::BoxLayout::Orientation::kHorizontal));
   window_->AddObserver(this);
+  SetAccessibleName(std::u16string(),
+                    ax::mojom::NameFrom::kAttributeExplicitlyEmpty);
+  SetAccessibleRole(ax::mojom::Role::kMenuBar);
 }
 
 MenuBar::~MenuBar() {
@@ -122,11 +126,6 @@ void MenuBar::OnWindowFocus() {
   SetAcceleratorVisibility(pane_has_focus());
 }
 
-void MenuBar::GetAccessibleNodeData(ui::AXNodeData* node_data) {
-  node_data->SetNameExplicitlyEmpty();
-  node_data->role = ax::mojom::Role::kMenuBar;
-}
-
 bool MenuBar::AcceleratorPressed(const ui::Accelerator& accelerator) {
   // Treat pressing Alt the same as pressing Esc.
   const ui::Accelerator& translated =
@@ -196,9 +195,10 @@ void MenuBar::ButtonPressed(size_t id, const ui::Event& event) {
 
   // Deleted in MenuDelegate::OnMenuClosed
   auto* menu_delegate = new MenuDelegate(this);
-  menu_delegate->RunMenu(
-      menu_model_->GetSubmenuModelAt(id), source,
-      event.IsKeyEvent() ? ui::MENU_SOURCE_KEYBOARD : ui::MENU_SOURCE_MOUSE);
+  menu_delegate->RunMenu(menu_model_->GetSubmenuModelAt(id), source,
+                         event.IsKeyEvent()
+                             ? ui::mojom::MenuSourceType::kKeyboard
+                             : ui::mojom::MenuSourceType::kMouse);
   menu_delegate->AddObserver(this);
 }
 

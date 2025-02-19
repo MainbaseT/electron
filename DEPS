@@ -2,9 +2,9 @@ gclient_gn_args_from = 'src'
 
 vars = {
   'chromium_version':
-    '125.0.6412.0',
+    '135.0.7012.0',
   'node_version':
-    'v20.12.2',
+    'v22.14.0',
   'nan_version':
     'e14bdcd1f72d62bca1d541b66da43130384ec213',
   'squirrel.mac_version':
@@ -48,6 +48,9 @@ vars = {
   # It's only needed to parse the native tests configurations.
   'checkout_pyyaml': False,
 
+  # Can be used to disable the sysroot hooks.
+  'install_sysroot': True,
+
   'use_rts': False,
 
   'mac_xcode_version': 'default',
@@ -59,10 +62,6 @@ vars = {
 
   'checkout_nacl':
     False,
-  'checkout_libaom':
-    True,
-  'checkout_oculus_sdk':
-    False,
   'checkout_openxr':
     False,
   'build_with_chromium':
@@ -70,8 +69,6 @@ vars = {
   'checkout_android':
     False,
   'checkout_android_native_support':
-    False,
-  'checkout_google_benchmark':
     False,
   'checkout_clang_tidy':
     True,
@@ -160,6 +157,54 @@ hooks = [
       '-c',
       'import os, subprocess; os.chdir(os.path.join("src", "electron")); subprocess.check_call(["python3", "script/lib/npx.py", "yarn@' + (Var("yarn_version")) + '", "install", "--frozen-lockfile"]);',
     ],
+  },
+  {
+    'name': 'sysroot_arm',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and checkout_arm',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=arm'],
+  },
+  {
+    'name': 'sysroot_arm64',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and checkout_arm64',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=arm64'],
+  },
+  {
+    'name': 'sysroot_x86',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and (checkout_x86 or checkout_x64)',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=x86'],
+  },
+  {
+    'name': 'sysroot_mips',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and checkout_mips',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=mips'],
+  },
+  {
+    'name': 'sysroot_mips64',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and checkout_mips64',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=mips64el'],
+  },
+  {
+    'name': 'sysroot_x64',
+    'pattern': '.',
+    'condition': 'install_sysroot and checkout_linux and checkout_x64',
+    'action': ['python3', 'src/build/linux/sysroot_scripts/install-sysroot.py',
+               '--sysroots-json-path=' + Var('sysroots_json_path'),
+               '--arch=x64'],
   },
 ]
 

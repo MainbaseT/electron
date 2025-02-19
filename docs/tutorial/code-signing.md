@@ -13,8 +13,7 @@ security warnings.
 
 Both Windows and macOS prevent users from running unsigned applications. It is
 possible to distribute applications without codesigning them - but in order to
-run them, users need to go through multiple advanced and manual steps to run
-them.
+run them, users need to go through multiple advanced and manual steps.
 
 If you are building an Electron app that you intend to package and distribute,
 it should be code signed. The Electron ecosystem tooling makes codesigning your
@@ -55,8 +54,8 @@ If you're not using an integrated build pipeline like Forge, you
 are likely using [`@electron/packager`][], which includes [`@electron/osx-sign`][] and
 [`@electron/notarize`][].
 
-If you're using Packager's API, you can pass [in configuration that both signs
-and notarizes your application](https://electron.github.io/packager/main/modules.html).
+If you're using Packager's API, you can pass
+[in configuration that both signs and notarizes your application](https://electron.github.io/packager/main/modules.html).
 If the example below does not meet your needs, please see [`@electron/osx-sign`][] and
 [`@electron/notarize`][] for the many possible configuration options.
 
@@ -129,9 +128,9 @@ be found in the [Electron Forge Code Signing Tutorial](https://www.electronforge
 If you're not using an integrated build pipeline like Forge, you
 are likely using [`@electron/packager`][], which includes [`@electron/windows-sign`][].
 
-If you're using Packager's API, you can pass [in configuration that signs
-your application](https://electron.github.io/packager/main/modules.html). If the
-example below does not meet your needs, please see [`@electron/windows-sign`][]
+If you're using Packager's API, you can pass
+[in configuration that signs your application](https://electron.github.io/packager/main/modules.html).
+If the example below does not meet your needs, please see [`@electron/windows-sign`][]
 for the many possible configuration options.
 
 ```js @ts-nocheck

@@ -311,6 +311,18 @@ using FullScreenTransitionState =
   shell_->HandlePendingFullscreenTransitions();
 }
 
+- (void)windowDidFailToEnterFullScreen:(NSWindow*)window {
+  shell_->set_fullscreen_transition_state(FullScreenTransitionState::kNone);
+
+  shell_->SetResizable(is_resizable_);
+  shell_->NotifyWindowDidFailToEnterFullScreen();
+
+  if (shell_->HandleDeferredClose())
+    return;
+
+  shell_->HandlePendingFullscreenTransitions();
+}
+
 - (void)windowWillExitFullScreen:(NSNotification*)notification {
   shell_->set_fullscreen_transition_state(FullScreenTransitionState::kExiting);
 
@@ -353,6 +365,19 @@ using FullScreenTransitionState =
       shell_->GetNativeWindow());
   auto* bridged_view = bridge_host->GetInProcessNSWindowBridge();
   bridged_view->OnWindowWillClose();
+
+  // Native widget and its compositor have been destroyed upon close. We need
+  // to detach contents view in order to prevent reusing its layer without
+  // compositor in the `WebContentsViewMac::CreateViewForWidget`, leading to
+  // `DCHECK` failure in `BrowserCompositorMac::SetParentUiLayer`.
+  auto* contents_view =
+      static_cast<views::WidgetDelegate*>(shell_)->GetContentsView();
+  if (contents_view) {
+    auto* parent = contents_view->parent();
+    if (parent) {
+      parent->RemoveChildView(contents_view);
+    }
+  }
 }
 
 - (BOOL)windowShouldClose:(id)window {

@@ -5,27 +5,24 @@
 #include "shell/browser/ui/webui/accessibility_ui.h"
 
 #include <memory>
-#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include "base/command_line.h"
 #include "base/functional/bind.h"
 #include "base/functional/callback_helpers.h"
 #include "base/json/json_writer.h"
 #include "base/strings/escape.h"
-#include "base/strings/pattern.h"
+#include "base/strings/string_split.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
-#include "build/build_config.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/accessibility_resources.h"      // nogncheck
 #include "chrome/grit/accessibility_resources_map.h"  // nogncheck
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/pref_service.h"
-#include "content/public/browser/ax_event_notification_details.h"
 #include "content/public/browser/ax_inspect_factory.h"
 #include "content/public/browser/browser_accessibility_state.h"
 #include "content/public/browser/browser_context.h"
@@ -43,6 +40,7 @@
 #include "shell/browser/native_window.h"
 #include "shell/browser/window_list.h"
 #include "ui/accessibility/accessibility_features.h"
+#include "ui/accessibility/ax_updates_and_events.h"
 #include "ui/accessibility/platform/ax_platform_node.h"
 #include "ui/accessibility/platform/ax_platform_node_delegate.h"
 #include "ui/base/webui/web_ui_util.h"
@@ -53,49 +51,42 @@
 
 namespace {
 
-static const char kTargetsDataFile[] = "targets-data.json";
+constexpr std::string_view kTargetsDataFile = "targets-data.json";
 
-static const char kAccessibilityModeField[] = "a11yMode";
-static const char kBrowsersField[] = "browsers";
-static const char kErrorField[] = "error";
-static const char kFaviconUrlField[] = "faviconUrl";
-static const char kNameField[] = "name";
-static const char kPagesField[] = "pages";
-static const char kPidField[] = "pid";
-static const char kProcessIdField[] = "processId";
-static const char kRequestTypeField[] = "requestType";
-static const char kRoutingIdField[] = "routingId";
-static const char kSessionIdField[] = "sessionId";
-static const char kSupportedApiTypesField[] = "supportedApiTypes";
-static const char kTreeField[] = "tree";
-static const char kTypeField[] = "type";
-static const char kUrlField[] = "url";
-static const char kWidgetsField[] = "widgets";
-static const char kApiTypeField[] = "apiType";
-
-#if defined(USE_AURA)
-static const char kWidgetIdField[] = "widgetId";
-static const char kWidget[] = "widget";
-#endif
+constexpr std::string_view kAccessibilityModeField = "a11yMode";
+constexpr std::string_view kBrowsersField = "browsers";
+constexpr std::string_view kErrorField = "error";
+constexpr std::string_view kFaviconUrlField = "faviconUrl";
+constexpr std::string_view kNameField = "name";
+constexpr std::string_view kPagesField = "pages";
+constexpr std::string_view kPidField = "pid";
+constexpr std::string_view kProcessIdField = "processId";
+constexpr std::string_view kRequestTypeField = "requestType";
+constexpr std::string_view kRoutingIdField = "routingId";
+constexpr std::string_view kSessionIdField = "sessionId";
+constexpr std::string_view kSupportedApiTypesField = "supportedApiTypes";
+constexpr std::string_view kTreeField = "tree";
+constexpr std::string_view kTypeField = "type";
+constexpr std::string_view kUrlField = "url";
+constexpr std::string_view kApiTypeField = "apiType";
 
 // Global flags
-static const char kBrowser[] = "browser";
-static const char kCopyTree[] = "copyTree";
-static const char kHTML[] = "html";
-static const char kLocked[] = "locked";
-static const char kNative[] = "native";
-static const char kPage[] = "page";
-static const char kPDFPrinting[] = "pdfPrinting";
-static const char kScreenReader[] = "screenreader";
-static const char kShowOrRefreshTree[] = "showOrRefreshTree";
-static const char kText[] = "text";
-static const char kViewsAccessibility[] = "viewsAccessibility";
-static const char kWeb[] = "web";
+constexpr std::string_view kBrowser = "browser";
+constexpr std::string_view kCopyTree = "copyTree";
+constexpr std::string_view kHTML = "html";
+constexpr std::string_view kLocked = "locked";
+constexpr std::string_view kNative = "native";
+constexpr std::string_view kPage = "page";
+constexpr std::string_view kPDFPrinting = "pdfPrinting";
+constexpr std::string_view kScreenReader = "screenreader";
+constexpr std::string_view kShowOrRefreshTree = "showOrRefreshTree";
+constexpr std::string_view kText = "text";
+constexpr std::string_view kWeb = "web";
 
 // Possible global flag values
-static const char kDisabled[] = "disabled";
-static const char kOff[] = "off";
-static const char kOn[] = "on";
+constexpr std::string_view kDisabled = "disabled";
+constexpr std::string_view kOff = "off";
+constexpr std::string_view kOn = "on";
 
 base::Value::Dict BuildTargetDescriptor(
     const GURL& url,
@@ -142,8 +133,8 @@ base::Value::Dict BuildTargetDescriptor(content::RenderViewHost* rvh) {
   }
 
   return BuildTargetDescriptor(url, title, favicon_url,
-                               rvh->GetProcess()->GetID(), rvh->GetRoutingID(),
-                               accessibility_mode);
+                               rvh->GetProcess()->GetDeprecatedID(),
+                               rvh->GetRoutingID(), accessibility_mode);
 }
 
 base::Value::Dict BuildTargetDescriptor(electron::NativeWindow* window) {
@@ -153,19 +144,6 @@ base::Value::Dict BuildTargetDescriptor(electron::NativeWindow* window) {
   target_data.Set(kTypeField, kBrowser);
   return target_data;
 }
-
-#if defined(USE_AURA)
-base::Value::Dict BuildTargetDescriptor(views::Widget* widget) {
-  base::Value::Dict widget_data;
-  widget_data.Set(kNameField, widget->widget_delegate()->GetWindowTitle());
-  widget_data.Set(kTypeField, kWidget);
-
-  // Use the Widget's root view ViewAccessibility's unique ID for lookup.
-  int id = widget->GetRootView()->GetViewAccessibility().GetUniqueId().Get();
-  widget_data.Set(kWidgetIdField, id);
-  return widget_data;
-}
-#endif  // defined(USE_AURA)
 
 bool ShouldHandleAccessibilityRequestCallback(const std::string& path) {
   return path == kTargetsDataFile;
@@ -206,10 +184,6 @@ void HandleAccessibilityRequestCallback(
 
   // The "pdfPrinting" flag is independent of the others.
   data.Set(kPDFPrinting, pdf_printing ? kOn : kOff);
-
-  // The "Top Level Widgets" section is only relevant if views accessibility is
-  // enabled.
-  data.Set(kViewsAccessibility, features::IsAccessibilityTreeForViewsEnabled());
 
   std::string pref_api_type =
       std::string(pref->GetString(prefs::kShownAccessibilityApiType));
@@ -284,19 +258,6 @@ void HandleAccessibilityRequestCallback(
   }
   data.Set(kBrowsersField, std::move(window_list));
 
-  base::Value::List widgets_list;
-#if defined(USE_AURA)
-  if (features::IsAccessibilityTreeForViewsEnabled()) {
-    views::WidgetAXTreeIDMap& manager_map =
-        views::WidgetAXTreeIDMap::GetInstance();
-    const std::vector<views::Widget*> widgets = manager_map.GetWidgets();
-    for (views::Widget* widget : widgets) {
-      widgets_list.Append(BuildTargetDescriptor(widget));
-    }
-  }
-#endif  // defined(USE_AURA)
-  data.Set(kWidgetsField, std::move(widgets_list));
-
   std::move(callback).Run(base::MakeRefCounted<base::RefCountedString>(
       base::WriteJson(data).value_or("")));
 }
@@ -362,8 +323,7 @@ ElectronAccessibilityUI::ElectronAccessibilityUI(content::WebUI* web_ui)
 
   // Add required resources.
   html_source->UseStringsJs();
-  html_source->AddResourcePaths(
-      base::make_span(kAccessibilityResources, kAccessibilityResourcesSize));
+  html_source->AddResourcePaths(kAccessibilityResources);
   html_source->SetDefaultResource(IDR_ACCESSIBILITY_ACCESSIBILITY_HTML);
   html_source->SetRequestFilter(
       base::BindRepeating(&ShouldHandleAccessibilityRequestCallback),
