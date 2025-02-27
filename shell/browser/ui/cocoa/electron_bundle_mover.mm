@@ -16,6 +16,7 @@
 #include "gin/dictionary.h"
 #include "shell/browser/browser.h"
 #include "shell/common/gin_converters/callback_converter.h"
+#include "shell/common/gin_helper/error_thrower.h"
 
 namespace gin {
 
@@ -178,7 +179,7 @@ bool AuthorizedInstall(NSString* srcPath, NSString* dstPath, bool* canceled) {
     // longer accessible. If Apple removes the function entirely this will fail
     // gracefully. If they keep the function and throw some sort of exception,
     // this won't fail gracefully, but that's a risk we'll have to take for now.
-    security_AuthorizationExecuteWithPrivileges = (OSStatus(*)(
+    security_AuthorizationExecuteWithPrivileges = (OSStatus (*)(
         AuthorizationRef, const char*, AuthorizationFlags, char* const*,
         FILE**))dlsym(RTLD_DEFAULT, "AuthorizationExecuteWithPrivileges");
   }

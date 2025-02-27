@@ -10,7 +10,9 @@
 #include "base/functional/bind.h"
 #include "base/i18n/rtl.h"
 #include "cc/paint/skia_paint_canvas.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
+#include "shell/browser/ui/autofill_popup.h"
 #include "ui/accessibility/ax_enums.mojom.h"
 #include "ui/base/dragdrop/drag_drop_types.h"
 #include "ui/color/color_provider.h"
@@ -25,11 +27,6 @@
 
 namespace electron {
 
-void AutofillPopupChildView::GetAccessibleNodeData(ui::AXNodeData* node_data) {
-  node_data->role = ax::mojom::Role::kMenuItem;
-  node_data->SetName(suggestion_);
-}
-
 BEGIN_METADATA(AutofillPopupChildView)
 END_METADATA
 
@@ -39,6 +36,8 @@ AutofillPopupView::AutofillPopupView(AutofillPopup* popup,
   CreateChildViews();
   SetFocusBehavior(FocusBehavior::ALWAYS);
   set_drag_controller(this);
+  SetAccessibleRole(ax::mojom::Role::kMenu);
+  SetAccessibleName(u"Autofill Menu");
 }
 
 AutofillPopupView::~AutofillPopupView() {
@@ -101,7 +100,7 @@ void AutofillPopupView::Show() {
   auto* host = popup_->frame_host_->GetRenderViewHost()->GetWidget();
   host->AddKeyPressEventCallback(keypress_callback_);
 
-  NotifyAccessibilityEvent(ax::mojom::Event::kMenuStart, true);
+  NotifyAccessibilityEventDeprecated(ax::mojom::Event::kMenuStart, true);
 }
 
 void AutofillPopupView::Hide() {
@@ -112,7 +111,7 @@ void AutofillPopupView::Hide() {
   }
 
   RemoveObserver();
-  NotifyAccessibilityEvent(ax::mojom::Event::kMenuEnd, true);
+  NotifyAccessibilityEventDeprecated(ax::mojom::Event::kMenuEnd, true);
 
   if (GetWidget()) {
     GetWidget()->Close();
@@ -155,7 +154,7 @@ void AutofillPopupView::OnSelectedRowChanged(
     int selected = current_row_selection.value_or(-1);
     if (selected == -1 || static_cast<size_t>(selected) >= children().size())
       return;
-    children().at(selected)->NotifyAccessibilityEvent(
+    children().at(selected)->NotifyAccessibilityEventDeprecated(
         ax::mojom::Event::kSelection, true);
   }
 }
@@ -263,11 +262,6 @@ void AutofillPopupView::OnPaint(gfx::Canvas* canvas) {
   }
 }
 
-void AutofillPopupView::GetAccessibleNodeData(ui::AXNodeData* node_data) {
-  node_data->role = ax::mojom::Role::kMenu;
-  node_data->SetName("Autofill Menu");
-}
-
 void AutofillPopupView::OnMouseCaptureLost() {
   ClearSelection();
 }
@@ -324,23 +318,23 @@ void AutofillPopupView::OnMouseReleased(const ui::MouseEvent& event) {
 
 void AutofillPopupView::OnGestureEvent(ui::GestureEvent* event) {
   switch (event->type()) {
-    case ui::ET_GESTURE_TAP_DOWN:
-    case ui::ET_GESTURE_SCROLL_BEGIN:
-    case ui::ET_GESTURE_SCROLL_UPDATE:
+    case ui::EventType::kGestureTapDown:
+    case ui::EventType::kGestureScrollBegin:
+    case ui::EventType::kGestureScrollUpdate:
       if (HitTestPoint(event->location()))
         SetSelection(event->location());
       else
         ClearSelection();
       break;
-    case ui::ET_GESTURE_TAP:
-    case ui::ET_GESTURE_SCROLL_END:
+    case ui::EventType::kGestureTap:
+    case ui::EventType::kGestureScrollEnd:
       if (HitTestPoint(event->location()))
         AcceptSelection(event->location());
       else
         ClearSelection();
       break;
-    case ui::ET_GESTURE_TAP_CANCEL:
-    case ui::ET_SCROLL_FLING_START:
+    case ui::EventType::kGestureTapCancel:
+    case ui::EventType::kScrollFlingStart:
       ClearSelection();
       break;
     default:
@@ -366,7 +360,7 @@ bool AutofillPopupView::AcceleratorPressed(const ui::Accelerator& accelerator) {
 }
 
 bool AutofillPopupView::HandleKeyPressEvent(
-    const content::NativeWebKeyboardEvent& event) {
+    const input::NativeWebKeyboardEvent& event) {
   if (!popup_)
     return false;
   switch (event.windows_key_code) {

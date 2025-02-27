@@ -9,9 +9,7 @@
 #include <memory>
 #include <utility>
 
-#include "base/functional/bind.h"
 #include "base/no_destructor.h"
-#include "base/observer_list.h"
 #include "extensions/browser/event_router.h"
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/browser/extension_util.h"
@@ -100,6 +98,13 @@ ExtensionActionSetIconFunction::RunExtensionAction() {
   LOG(INFO) << "chrome.action.setIcon is not supported in Electron";
 
   return RespondNow(NoArguments());
+}
+
+ExtensionFunction::ResponseAction
+ExtensionActionOpenPopupFunction::RunExtensionAction() {
+  LOG(INFO) << "chrome.action.openPopup is not supported in Electron";
+
+  return RespondNow(WithArguments(""));
 }
 
 ExtensionFunction::ResponseAction

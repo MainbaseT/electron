@@ -6,8 +6,6 @@
 
 #include <vector>
 
-#include "base/containers/contains.h"
-#include "base/values.h"
 #include "content/public/common/webplugininfo.h"
 #include "electron/buildflags/buildflags.h"
 #include "url/gurl.h"
@@ -29,7 +27,7 @@ std::string PluginUtils::GetExtensionIdForMimeType(
   auto it = map.find(mime_type);
   if (it != map.end())
     return it->second;
-  return std::string();
+  return {};
 }
 
 base::flat_map<std::string, std::string>
@@ -54,8 +52,7 @@ PluginUtils::GetMimeTypeToExtensionIdMap(
 
     if (MimeTypesHandler* handler = MimeTypesHandler::GetHandler(extension)) {
       for (const auto& supported_mime_type : handler->mime_type_set()) {
-        DCHECK(!base::Contains(mime_type_to_extension_id_map,
-                               supported_mime_type));
+        DCHECK(!mime_type_to_extension_id_map.contains(supported_mime_type));
         mime_type_to_extension_id_map[supported_mime_type] = extension_id;
       }
     }

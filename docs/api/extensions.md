@@ -1,9 +1,8 @@
 # Chrome Extension Support
 
-Electron supports a subset of the [Chrome Extensions
-API][chrome-extensions-api-index], primarily to support DevTools extensions and
-Chromium-internal extensions, but it also happens to support some other
-extension capabilities.
+Electron supports a subset of the [Chrome Extensions API][chrome-extensions-api-index],
+primarily to support DevTools extensions and Chromium-internal extensions,
+but it also happens to support some other extension capabilities.
 
 [chrome-extensions-api-index]: https://developer.chrome.com/extensions/api_index
 
@@ -15,7 +14,7 @@ extension capabilities.
 
 Electron only supports loading unpacked extensions (i.e., `.crx` files do not
 work). Extensions are installed per-`session`. To load an extension, call
-[`ses.loadExtension`](session.md#sesloadextensionpath-options):
+[`ses.extensions.loadExtension`](extensions-api.md#extensionsloadextensionpath-options):
 
 ```js
 const { session } = require('electron')

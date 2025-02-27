@@ -10,7 +10,7 @@ This change removes the usage of these constants to fix a compilation failure du
 See: https://github.com/llvm/llvm-project/pull/80542
 
 diff --git a/deps/uv/include/uv.h b/deps/uv/include/uv.h
-index 3375600023e39ddacf62cc17deb4f206db942084..cc106422dd36aa0564e74dd8a16eec496433d3bd 100644
+index f75a496071ac3396cbc6dec819eaab7294609deb..30f9a05f2f508b55a7d7ae036612660068c8400e 100644
 --- a/deps/uv/include/uv.h
 +++ b/deps/uv/include/uv.h
 @@ -155,7 +155,6 @@ struct uv__queue {
@@ -45,7 +45,7 @@ index 127278ef916161a96e23e645927d16bedfdaca5b..b36da3daa5744e6f994e32d9d82aaef6
  # define UV__EUNATCH UV__ERR(EUNATCH)
  #else
 diff --git a/src/node_constants.cc b/src/node_constants.cc
-index 149c7c107322919dfeea1dfe89dc223f78b0e979..e4e8dac6b8b5924a7eae83935031e09142554747 100644
+index 13263149c111beede83b7063fa54f56655aea54c..99068098e1867af4846e18a5d039a25689722a4a 100644
 --- a/src/node_constants.cc
 +++ b/src/node_constants.cc
 @@ -241,10 +241,6 @@ void DefineErrnoConstants(Local<Object> target) {
@@ -86,10 +86,10 @@ index 149c7c107322919dfeea1dfe89dc223f78b0e979..e4e8dac6b8b5924a7eae83935031e091
    NODE_DEFINE_CONSTANT(target, ETIMEDOUT);
  #endif
 diff --git a/src/node_errors.cc b/src/node_errors.cc
-index 7ef6ea7f07998f25385c3dee2feb5a68923c4726..56eba10cf791cce2de760f8ed2b34e040676fc8b 100644
+index 609601328f7f5ff5f121151e81c2df82e7ef4253..6b9b944c11af917fe4e296961e6ed7df7b89a123 100644
 --- a/src/node_errors.cc
 +++ b/src/node_errors.cc
-@@ -842,10 +842,6 @@ const char* errno_string(int errorno) {
+@@ -862,10 +862,6 @@ const char* errno_string(int errorno) {
      ERRNO_CASE(ENOBUFS);
  #endif
  
@@ -100,7 +100,7 @@ index 7ef6ea7f07998f25385c3dee2feb5a68923c4726..56eba10cf791cce2de760f8ed2b34e04
  #ifdef ENODEV
      ERRNO_CASE(ENODEV);
  #endif
-@@ -884,14 +880,6 @@ const char* errno_string(int errorno) {
+@@ -904,14 +900,6 @@ const char* errno_string(int errorno) {
      ERRNO_CASE(ENOSPC);
  #endif
  
@@ -115,7 +115,7 @@ index 7ef6ea7f07998f25385c3dee2feb5a68923c4726..56eba10cf791cce2de760f8ed2b34e04
  #ifdef ENOSYS
      ERRNO_CASE(ENOSYS);
  #endif
-@@ -974,10 +962,6 @@ const char* errno_string(int errorno) {
+@@ -994,10 +982,6 @@ const char* errno_string(int errorno) {
      ERRNO_CASE(ESTALE);
  #endif
  

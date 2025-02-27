@@ -16,7 +16,7 @@
 #include "base/win/windows_types.h"
 #include "base/win/wrapped_window_proc.h"
 #include "shell/common/color_util.h"
-#include "ui/base/win/shell.h"
+#include "shell/common/process_util.h"
 #include "ui/gfx/color_utils.h"
 #include "ui/gfx/win/hwnd_util.h"
 
@@ -75,10 +75,6 @@ std::string ConvertDeviceAccessStatus(DeviceAccessStatus value) {
 }  // namespace
 
 namespace api {
-
-bool SystemPreferences::IsAeroGlassEnabled() {
-  return true;
-}
 
 std::string hexColorDWORDToRGBA(DWORD color) {
   DWORD rgba = color << 8 | color >> 24;
@@ -154,11 +150,13 @@ std::string SystemPreferences::GetMediaAccessStatus(
         DeviceAccessStatus::DeviceAccessStatus_Allowed);
   } else {
     thrower.ThrowError("Invalid media type");
-    return std::string();
+    return {};
   }
 }
 
 void SystemPreferences::InitializeWindow() {
+  if (electron::IsUtilityProcess())
+    return;
   // Wait until app is ready before creating sys color listener
   // Creating this listener before the app is ready causes global shortcuts
   // to not fire
